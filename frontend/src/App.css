@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@200;400;700&display=swap');
+
+* {
+  font-family: "Nunito", sans-serif !important;
+}
+
+/* NavBar  */
+
+.nav-bar-text a, .nav-bar-btn a{
+  text-decoration: none;
+  color: white;
+}
+
+/* Not Found */
+
+.not-found {
+  text-align: center;
+  color: rgb(68,68,68);
+  min-height: 80vh;
+  margin-top: 200px; 
+}
+
+.not-found p {
+  font-size: 20px;
+}
+
+/* Add Channel */
+
+.form-wrapper, .results-wraper {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.channal-inputs-container {
+  margin-top: 25px;
+}
+
+.channal-name {
+  width: 40ch !important;
+}
+
+.channal-btn {
+  margin-top: 25px;
+}
+
+/* Home - Channels Page */
+
+.results-wraper {
+  width: 80%;
+  margin: auto;
+}
+
+.channels-wrapper {
+  width: 100%;
+}
+
+.oneChannel {
+  margin: 40px;
+  width: 20%;
+  display: inline-block;
+  height: 180px;
+  vertical-align: top;
+}
+
+/* Search */
+
+.search-wraper {
+  margin-top: 20px;
+  margin: 20px auto;
+}
