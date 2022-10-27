@@ -3,25 +3,39 @@ import { useNavigate } from "react-router-dom";
 import { Box, Typography, Button, TextField } from "@mui/material";
 
 import axios from "axios";
+import ChannelsCategories from "./ChannelsCategories";
+import { useSelector } from "react-redux";
+
 
 const AddChannel = () => {
-  const [name, setName] = useState("");
+
+  const [chanalName, setChanalName] = useState("");
   const navigate = useNavigate();
 
+  const channalCategoryName = useSelector((state) => state.channel.categoryName);
+
   const handleChange = (value) => {
-    setName(value);
+    setChanalName(value);
   };
 
 
   const addChannelDetails = () => {
-    const options = {
-      method: "POST",
-      url: `http://localhost:5000/current-channel`,
-      params: { channel_name: name },
-    };
+    let options = {}
+    if (chanalName.charAt(0) !== "@") {
+      options = {
+        method: "POST",
+        url: `http://localhost:5000/current-channel`,
+        params: { channel_name: "@" + chanalName, category_name: channalCategoryName },
+      };
+    } else {
+      options = {
+        method: "POST",
+        url: `http://localhost:5000/current-channel`,
+        params: { channel_name: chanalName, category_name: channalCategoryName},
+      };
+    }
     axios.request(options).then((response) => {
       console.log("response", response);
-
       navigate("/");
     });
   };
@@ -42,12 +56,15 @@ const AddChannel = () => {
         >
           <TextField
             className="channal-name"
-            value={name}
+            value={chanalName}
             id="outlined-basic"
             label="Channal Name"
             variant="outlined"
             onChange={(e) => handleChange(e.target.value)}
           />
+        </Box>
+        <Box className="channal-category-container">
+          <ChannelsCategories/>
         </Box>
         <Box className="channal-btn">
           <Button variant="contained" onClick={addToChannelsArray}>

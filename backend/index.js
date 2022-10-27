@@ -12,7 +12,10 @@ const token = require('./consts');
 const app = express();
 app.use(express.json());
 app.use(cors());
-
+app.use(express.static('public'));
+app.use(express.static(__dirname+'/images'));
+// app.use(express.static('public')); 
+// app.use('/images', express.static('images'));
 
 const channelsCache = [
     {
@@ -22,7 +25,10 @@ const channelsCache = [
         photo: { small_file_id: 'AQADBAADLLcxG2xqcVMACAIAA2KAydkW____Ix1lMIwiYHMpBA', small_file_unique_id: 'AQADLLcxG2xqcVMAAQ', big_file_id: 'AQADBAADLLcxG2xqcVMACAMAA2KAydkW____Ix1lMIwiYHMpBA', big_file_unique_id: 'AQADLLcxG2xqcVMB' },
         title: "🅵🆄🅽🅴🆃 - charge of positive emotions",
         type: "channel",
-        username: "funet"
+        username: "funet",
+        profileImage: "\\images\\funet.jpg",
+        category: "Fun"
+
     },
     {
         id: -1001523161524,
@@ -30,7 +36,9 @@ const channelsCache = [
         photo: { small_file_id: 'AQADBAADzbUxGzYV8VMACAIAA0xWkdAW____HcvOg1chv_4pBA', small_file_unique_id: 'AQADzbUxGzYV8VMAAQ', big_file_id: 'AQADBAADzbUxGzYV8VMACAMAA0xWkdAW____HcvOg1chv_4pBA', big_file_unique_id: 'AQADzbUxGzYV8VMB' },
         title: "We are the History",
         type: "channel",
-        username: "pfff_history"
+        username: "pfff_history",
+        profileImage: "\\images\\pfff_history.jpg",
+        category: "Education"
     },
     {
         id: -1001509614260,
@@ -44,7 +52,9 @@ const channelsCache = [
             big_file_id: "AQADBQADQa4xG2HccFYACAMAA0wNYNEW____U7ijNQAB1B4NKQQ",
             big_file_unique_id: "AQADQa4xG2HccFYB"
         },
-        membersCounter: 122018
+        membersCounter: 122018,
+        profileImage: "\\images\\pumpleaks.jpg",
+        category: "Other"
     },
 
 ];
@@ -65,9 +75,11 @@ const getChannelLastUpTimestemp = () => {
     return tmpStartDate;
 };
 
-const getProfilePhoto = async (filePath, fileName) => {
+const getAndSaveProfilePhoto = async (filePath, fileName) => {
     try {
-        const imgPath = path.resolve(__dirname, 'images', `${fileName}.jpg`);
+        const imgPath = path.resolve(__dirname, 'public/images', `${fileName}.jpg`);
+        console.log('imgPath', imgPath);
+        
 
         const res = await axios({
             url: `https://api.telegram.org/file/bot${token.myToken}/${filePath}`,
@@ -114,18 +126,19 @@ app.get("/", (req, res) => {
     res.send("Welcome to our Telegram Channels Catalog...");
 });
 
-
 app.post("/current-channel", (req, res) => {
 
     const chat_id = req.query.channel_name;
-    // console.log('chat_id', chat_id);
+    const categoty = req.query.category_name;
+    // console.log('req.query', req.query);
     
     axios.get(`https://api.telegram.org/bot${token.myToken}/getChat?chat_id=${chat_id}`).then(async (channelDetails) => {
         // console.log('channelDetails', channelDetails.data);
         if (channelDetails.data.ok) {
             let channelObj = channelDetails.data.result;
+            channelObj.category = categoty;
             let photoID = channelDetails.data.result.photo.small_file_id;
-            let fileName = channelDetails.data.result.title;
+            let fileName = channelDetails.data.result.username;
 
             const membersCounterRequest = axios.get(`https://api.telegram.org/bot${token.myToken}/getChatMembersCount?chat_id=${chat_id}`);
             const filePathRequest = axios.get(`https://api.telegram.org/bot${token.myToken}/getFile?file_id=${photoID}`);
@@ -139,16 +152,20 @@ app.post("/current-channel", (req, res) => {
                 const filePathResponse = responses[1];
                 // console.log('filePathResponse', filePathResponse.data.result.file_path);
                 let filePath = filePathResponse.data.result.file_path;
-                const ProfilePhotoPath = await getProfilePhoto(filePath, fileName);
-                // console.log('ProfilePhotoPath>>>>>', ProfilePhotoPath);
+                const tmpProfilePhotoPath = await getAndSaveProfilePhoto(filePath, fileName);
+                const ProfilePhotoPath = tmpProfilePhotoPath.split("public").pop();;
+                console.log('ProfilePhotoPath', ProfilePhotoPath);
+                
+
                 channelObj.profileImage = ProfilePhotoPath;
-                // console.log('channelObj', channelObj);
+                console.log('channelObj', channelObj);
                 
                 channelsCache.push(channelObj);
                 res.send({ status: 'OK' });
 
               })).catch(errors => {
                 console.log('errors', errors);
+
                 
               });
 
@@ -167,10 +184,10 @@ app.post("/current-channel", (req, res) => {
 
 app.get("/channels", (req, res) => {
 
-    const dataToSend = channelsCache.map(({ id, title, description, membersCounter, type, username, isDisabled, profileImage }) => {
-        return { id, title, description, membersCounter, type, username, isDisabled, profileImage };
+    const dataToSend = channelsCache.map(({ id, title, description, membersCounter, type, username, isDisabled, profileImage, category }) => {
+        return { id, title, description, membersCounter, type, username, isDisabled, profileImage, category };
     })
-    // console.log('dataToSend', dataToSend);
+    console.log('dataToSend', dataToSend);
     res.send(dataToSend);
 });
 

@@ -4,7 +4,15 @@ import { getChannels } from "../features/channelSlice";
 
 import axios from "axios";
 
-import { Button } from "@mui/material";
+import {
+  Card,
+  CardHeader,
+  Typography,
+  CardContent,
+  Button,
+  CardActions,
+  Tooltip 
+} from "@mui/material";
 import KeyboardDoubleArrowUpIcon from "@mui/icons-material/KeyboardDoubleArrowUp";
 
 const Channels = () => {
@@ -22,7 +30,6 @@ const Channels = () => {
     setFilteredList(channelsList);
   }, [channelsList]);
 
-  
   const filterChannelList = (channelsList, filterBy) => {
     if (filterBy.length > 0) {
       console.log("filterBy", filterBy);
@@ -43,7 +50,7 @@ const Channels = () => {
     };
 
     axios.request(options).then((response) => {
-      console.log('response', response);
+      console.log("response", response);
       dispatch(getChannels(response.data));
     });
   };
@@ -71,28 +78,38 @@ const Channels = () => {
     updateChannelIndex(id);
   };
 
-
   return (
     <>
       {filteredList?.map((channel) => (
-        
-        <div key={channel.id} className="oneChannel">
-          <div><b>{channel.title}</b></div>
-          <div>
-            <img src={channel.profileImage}></img>
-            
+        <Card key={channel.id} className="oneChannel">
+          <CardHeader title={channel.title} />
+          <div className="bg">
+            <img src={`http://localhost:5000${channel.profileImage}`} />
+            <div class="overlay">
+              <div>Category: {channel.category}</div>
+            </div>
           </div>
-          {channel.description ? (
-            <div><i>{channel.description}</i></div>
-          ) : (
-            <div><i>No Description</i></div>
-          )}
-          <div>{channel.membersCounter}</div>
-          <div>
-            <a href={`https://t.me/${channel.username}`}>@{channel.username}</a>
-          </div>
-          <div>
+          <CardContent>
+            {channel.description ? (
+              <Typography variant="body2" color="text.secondary">
+                {channel.description}
+              </Typography>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                No Description
+              </Typography>
+            )}
+            <Typography variant="body2" color="text.secondary">
+              {channel.membersCounter}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              <a href={`https://t.me/${channel.username}`}>@{channel.username}</a>
+            </Typography>
+          </CardContent>
+          <CardActions>
+          <Tooltip title="Click to UP the channel" placement="right-end">
             <Button
+              className="upBtn"
               size="small"
               variant="contained"
               color="success"
@@ -101,8 +118,10 @@ const Channels = () => {
             >
               <KeyboardDoubleArrowUpIcon />
             </Button>
-          </div>
-        </div>
+          </Tooltip>
+          
+          </CardActions>
+        </Card>
       ))}
     </>
   );

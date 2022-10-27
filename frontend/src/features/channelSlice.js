@@ -4,6 +4,7 @@ import { createSlice } from "@reduxjs/toolkit";
 //todo: rename items
 const initialState = {
     channelsList: [],
+    categoryName: '',
     filterBy: '',
     status: 'pending',
     error: null,
@@ -20,8 +21,11 @@ export const channelSlice = createSlice({
         updateFilterBy: (state, action) => {
             state.filterBy = action.payload;
         },
+        channalCategoryName: (state, action) => {
+            state.categoryName = action.payload;
+        }
     }
 });
 
-export const { getChannels, updateFilterBy } = channelSlice.actions;
+export const { getChannels, updateFilterBy, channalCategoryName } = channelSlice.actions;
 export default channelSlice.reducer;

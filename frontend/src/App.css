@@ -1,5 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@200;400;700&display=swap');
 
+
+
 * {
   font-family: "Nunito", sans-serif !important;
 }
@@ -31,11 +33,11 @@
   margin-top: 30px;
 }
 
-.channal-inputs-container {
+.channal-inputs-container, .channal-category-container {
   margin-top: 25px;
 }
 
-.channal-name {
+.channal-name, .channal-categories {
   width: 40ch !important;
 }
 
@@ -58,8 +60,13 @@
   margin: 40px;
   width: 20%;
   display: inline-block;
-  height: 180px;
+  height: auto;
   vertical-align: top;
+  border: 1px solid #ccc;
+}
+
+.oneChannel .upBtn {
+  margin: auto;
 }
 
 /* Search */
@@ -68,3 +75,6 @@
   margin-top: 20px;
   margin: 20px auto;
 }
+
+
+
