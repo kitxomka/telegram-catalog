@@ -6,43 +6,56 @@ import axios from "axios";
 import ChannelsCategories from "./ChannelsCategories";
 import { useSelector } from "react-redux";
 
-
 const AddChannel = () => {
-
-  const [chanalName, setChanalName] = useState("");
+  const [channelName, setChannelName] = useState("");
   const navigate = useNavigate();
 
-  const channalCategoryName = useSelector((state) => state.channel.categoryName);
+  const channelCategoryName = useSelector(
+    (state) => state.channel.categoryName
+  );
 
   const handleChange = (value) => {
-    setChanalName(value);
+    setChannelName(value);
   };
 
-
   const addChannelDetails = () => {
-    let options = {}
-    if (chanalName.charAt(0) !== "@") {
-      options = {
-        method: "POST",
-        url: `http://localhost:5000/current-channel`,
-        params: { channel_name: "@" + chanalName, category_name: channalCategoryName },
-      };
+    let options = {};
+    let categoryName = "";
+    if (channelCategoryName.length != 0) {
+      categoryName = channelCategoryName;
     } else {
-      options = {
-        method: "POST",
-        url: `http://localhost:5000/current-channel`,
-        params: { channel_name: chanalName, category_name: channalCategoryName},
-      };
+      categoryName = "Other";
     }
+
+    if (channelName.length != 0) {
+      console.log("channelName:", channelName);
+      if (channelName.charAt(0) !== "@") {
+        options = {
+          method: "POST",
+          url: `http://localhost:5000/current-channel`,
+          params: {
+            channel_name: "@" + channelName,
+            category_name: categoryName,
+          },
+        };
+      } else {
+        options = {
+          method: "POST",
+          url: `http://localhost:5000/current-channel`,
+          params: { channel_name: channelName, category_name: categoryName },
+        };
+      }
+    } else {
+      alert('The channel name is required');
+    }
+
     axios.request(options).then((response) => {
       console.log("response", response);
       navigate("/");
     });
   };
 
-  const addToChannelsArray = () => {
-    addChannelDetails();
-  };
+  
 
   return (
     <>
@@ -56,18 +69,19 @@ const AddChannel = () => {
         >
           <TextField
             className="channal-name"
-            value={chanalName}
+            value={channelName}
             id="outlined-basic"
-            label="Channal Name"
+            label="Channel Name"
             variant="outlined"
             onChange={(e) => handleChange(e.target.value)}
+            required
           />
         </Box>
         <Box className="channal-category-container">
-          <ChannelsCategories/>
+          <ChannelsCategories />
         </Box>
         <Box className="channal-btn">
-          <Button variant="contained" onClick={addToChannelsArray}>
+          <Button variant="contained" onClick={addChannelDetails}>
             Add
           </Button>
         </Box>

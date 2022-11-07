@@ -11,7 +11,7 @@ import {
   CardContent,
   Button,
   CardActions,
-  Tooltip 
+  Tooltip,
 } from "@mui/material";
 import KeyboardDoubleArrowUpIcon from "@mui/icons-material/KeyboardDoubleArrowUp";
 
@@ -21,6 +21,7 @@ const Channels = () => {
   const dispatch = useDispatch();
 
   const [filteredList, setFilteredList] = useState([]);
+  const filteredListLength = filteredList.length;
 
   useEffect(() => {
     filterChannelList(channelsList, filterBy);
@@ -78,35 +79,34 @@ const Channels = () => {
     updateChannelIndex(id);
   };
 
-  return (
+  const channelsHtml = filteredList?.map((channel) => (
     <>
-      {filteredList?.map((channel) => (
-        <Card key={channel.id} className="oneChannel">
-          <CardHeader title={channel.title} />
-          <div className="bg">
-            <img src={`http://localhost:5000${channel.profileImage}`} />
-            <div class="overlay">
-              <div>Category: {channel.category}</div>
-            </div>
+      <Card key={channel.id} className="oneChannel">
+        <CardHeader title={channel.title} />
+        <div className="bg">
+          <img src={`http://localhost:5000${channel.profileImage}`} />
+          <div class="overlay">
+            <div>Category: {channel.category}</div>
           </div>
-          <CardContent>
-            {channel.description ? (
-              <Typography variant="body2" color="text.secondary">
-                {channel.description}
-              </Typography>
-            ) : (
-              <Typography variant="body2" color="text.secondary">
-                No Description
-              </Typography>
-            )}
+        </div>
+        <CardContent>
+          {channel.description ? (
             <Typography variant="body2" color="text.secondary">
-              {channel.membersCounter}
+              {channel.description}
             </Typography>
-            <Typography variant="body1" color="text.secondary">
-              <a href={`https://t.me/${channel.username}`}>@{channel.username}</a>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              No Description
             </Typography>
-          </CardContent>
-          <CardActions>
+          )}
+          <Typography variant="body2" color="text.secondary">
+            {channel.membersCounter}
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            <a href={`https://t.me/${channel.username}`}>@{channel.username}</a>
+          </Typography>
+        </CardContent>
+        <CardActions>
           <Tooltip title="Click to UP the channel" placement="right-end">
             <Button
               className="upBtn"
@@ -119,12 +119,12 @@ const Channels = () => {
               <KeyboardDoubleArrowUpIcon />
             </Button>
           </Tooltip>
-          
-          </CardActions>
-        </Card>
-      ))}
+        </CardActions>
+      </Card>
     </>
-  );
+  ));
+
+  return (filteredListLength > 0 ? channelsHtml  : "There is no match");
 };
 
 export default Channels;

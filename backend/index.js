@@ -13,7 +13,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.static('public'));
-app.use(express.static(__dirname+'/images'));
+app.use(express.static(__dirname + '/images'));
 // app.use(express.static('public')); 
 // app.use('/images', express.static('images'));
 
@@ -26,8 +26,9 @@ const channelsCache = [
         title: "🅵🆄🅽🅴🆃 - charge of positive emotions",
         type: "channel",
         username: "funet",
-        profileImage: "\\images\\funet.jpg",
-        category: "Fun"
+        profileImage: "\\images\\funet_channelPic.jpg",
+        category: "Fun",
+        toBeUpdated: false
 
     },
     {
@@ -37,8 +38,9 @@ const channelsCache = [
         title: "We are the History",
         type: "channel",
         username: "pfff_history",
-        profileImage: "\\images\\pfff_history.jpg",
-        category: "Education"
+        profileImage: "\\images\\pfff_history_channelPic.jpg",
+        category: "Education",
+        toBeUpdated: false
     },
     {
         id: -1001509614260,
@@ -53,8 +55,9 @@ const channelsCache = [
             big_file_unique_id: "AQADQa4xG2HccFYB"
         },
         membersCounter: 122018,
-        profileImage: "\\images\\pumpleaks.jpg",
-        category: "Other"
+        profileImage: "\\images\\pumpleaks_channelPic.jpg",
+        category: "Other",
+        toBeUpdated: false
     },
 
 ];
@@ -65,10 +68,6 @@ const convertMillisecondsToMinutes = (ms) => {
     return minutes;
 }
 
-// const convertMillisecondsToHours = (ms) => {
-// 	const hours = ms / (60 * 60 * 1000);
-//   return hours;
-// }
 
 const getChannelLastUpTimestemp = () => {
     const tmpStartDate = new Date();
@@ -77,9 +76,11 @@ const getChannelLastUpTimestemp = () => {
 
 const getAndSaveProfilePhoto = async (filePath, fileName) => {
     try {
-        const imgPath = path.resolve(__dirname, 'public/images', `${fileName}.jpg`);
-        console.log('imgPath', imgPath);
-        
+        const imgPath = path.resolve(__dirname, 'public/images', `${fileName}_channelPic.jpg`);
+        // console.log('imgPath', imgPath);
+        if (fs.existsSync(imgPath)) {
+            fs.unlinkSync(imgPath);
+        }
 
         const res = await axios({
             url: `https://api.telegram.org/file/bot${token.myToken}/${filePath}`,
@@ -88,17 +89,14 @@ const getAndSaveProfilePhoto = async (filePath, fileName) => {
         });
 
         res.data.pipe(fs.createWriteStream(imgPath));
-        // console.log('1');
         return imgPath;
-
-        // @acetravels
 
     } catch (error) {
         console.log('error', error);
     }
 }
 
-
+// cron runs every minute and checks if the the 24 hours of some channels up is ended
 cron.schedule('* * * * *', function () {
     // console.log('channelsCache', channelsCache); 
     console.log('running a task every minute');
@@ -120,86 +118,70 @@ cron.schedule('* * * * *', function () {
     })
 });
 
+const fetchChannelDetails = (name, category, callback, res) => {
+    // console.log('name', name);
+    // console.log('category', category);
 
+    // const channelDetails = await axios.get('getChat')
+    // const moreDetails = await axios.all(...)
+    // ... create enrichedDetails Obj
+    // return enrichedDetails;
 
-app.get("/", (req, res) => {
-    res.send("Welcome to our Telegram Channels Catalog...");
-});
-
-app.post("/current-channel", (req, res) => {
-
-    const chat_id = req.query.channel_name;
-    const categoty = req.query.category_name;
-    // console.log('req.query', req.query);
-    
-    axios.get(`https://api.telegram.org/bot${token.myToken}/getChat?chat_id=${chat_id}`).then(async (channelDetails) => {
+    axios.get(`https://api.telegram.org/bot${token.myToken}/getChat?chat_id=${name}`).then((channelDetails) => {
         // console.log('channelDetails', channelDetails.data);
         if (channelDetails.data.ok) {
             let channelObj = channelDetails.data.result;
-            channelObj.category = categoty;
+            channelObj.category = category;
             let photoID = channelDetails.data.result.photo.small_file_id;
             let fileName = channelDetails.data.result.username;
 
-            const membersCounterRequest = axios.get(`https://api.telegram.org/bot${token.myToken}/getChatMembersCount?chat_id=${chat_id}`);
+            const membersCounterRequest = axios.get(`https://api.telegram.org/bot${token.myToken}/getChatMembersCount?chat_id=${name}`);
             const filePathRequest = axios.get(`https://api.telegram.org/bot${token.myToken}/getFile?file_id=${photoID}`);
 
             axios.all([membersCounterRequest, filePathRequest]).then(axios.spread(async (...responses) => {
+                const membersCounter = responses[0].data.result;
+                // console.log('membersCounter', membersCounter);
+                channelObj.membersCounter = membersCounter;
 
-                const membersCounterResponse = responses[0];
-                channelObj.membersCounter = membersCounterResponse.data.result
-                // console.log('membersCounterResponse', membersCounterResponse.data.result);
-
-                const filePathResponse = responses[1];
-                // console.log('filePathResponse', filePathResponse.data.result.file_path);
-                let filePath = filePathResponse.data.result.file_path;
+                let filePath = responses[1].data.result.file_path;
+                // console.log('filePath', filePath);
                 const tmpProfilePhotoPath = await getAndSaveProfilePhoto(filePath, fileName);
-                const ProfilePhotoPath = tmpProfilePhotoPath.split("public").pop();;
-                console.log('ProfilePhotoPath', ProfilePhotoPath);
-                
-
+                const ProfilePhotoPath = tmpProfilePhotoPath?.split("public").pop();;
+                // console.log('ProfilePhotoPath', ProfilePhotoPath);
                 channelObj.profileImage = ProfilePhotoPath;
-                console.log('channelObj', channelObj);
-                
-                channelsCache.push(channelObj);
+                channelObj.toBeUpdated = false;
+                // console.log('channelObj', channelObj);
+                callback(channelObj);
                 res.send({ status: 'OK' });
 
-              })).catch(errors => {
-                console.log('errors', errors);
+            })).catch((error) => {
+                console.log('error', error);
 
-                
-              });
-
-
+            });    
         } else {
-            res.send(channelDetails);
-        } 
+            // console.log('channelDetails');
+            res.send(channelDetails);   
+        }
 
     }).catch((error) => {
-        
+        // console.log('error', error);
         res.status(error.response?.data.error_code);
-        res.send({ ...error.response?.data, channelDetails: 'channelDetails' });
-    });
-    
-});
-
-app.get("/channels", (req, res) => {
-
-    const dataToSend = channelsCache.map(({ id, title, description, membersCounter, type, username, isDisabled, profileImage, category }) => {
-        return { id, title, description, membersCounter, type, username, isDisabled, profileImage, category };
+        res.send({ ...error.response?.data, channelDetails: 'channelDetails' });  
     })
-    console.log('dataToSend', dataToSend);
-    res.send(dataToSend);
-});
+}
 
-app.post("/update-channel-index", (req, res) => {
-    // console.log('req', req.query);
+const addNewChannel = (channel) => {
+    channelsCache.unshift(channel);
+}
 
-    const chat_id = req.query.channel_id;
+const upChannel = (channel) => {
+    // console.log('channel', channel);
     const start_date = getChannelLastUpTimestemp();
+    const chat_id = channel.id;
     const index = channelsCache.findIndex(object => {
         return object.id === parseInt(chat_id);
     });
-    // console.log('index', index)
+    // console.log('index', index);
     if (index !== -1) {
 
         if (channelsCache[index].isDisabled) {
@@ -210,9 +192,60 @@ app.post("/update-channel-index", (req, res) => {
             channelsCache[index].startDate = start_date;
             channelsCache.unshift(...channelsCache.splice(index, 1));
             // console.log('channelsCache', channelsCache);
-            res.send(channelsCache);
         }
     }
+  
+}
+
+
+
+app.get("/", (req, res) => {
+    res.send("Welcome to our Telegram Channels Catalog...");
+});
+
+// todo: change url name to '/channel'
+app.post("/current-channel", (req, res) => {
+
+    const chat_name = req.query.channel_name;
+    const category = req.query.category_name;
+    // console.log('req.query', req.query);
+
+    fetchChannelDetails(chat_name, category, addNewChannel, res);
+    // const enruchedChannelDetails;
+    // try {
+    //      enruchedChannelDetails = await fetchChannelDetails(...)
+    //      addNewChannel(enruchedChannelDetails)
+    //      res.send('ok')
+    // } catch () {
+    //      res.send('fail')
+    // }
+    // 
+    
+});
+
+app.get("/channels", (req, res) => {
+
+    const dataToSend = channelsCache.map(({ id, title, description, membersCounter, type, username, isDisabled, profileImage, category }) => {
+        return { id, title, description, membersCounter, type, username, isDisabled, profileImage, category };
+    })
+    // console.log('dataToSend', dataToSend);
+    res.send(dataToSend);
+});
+
+app.post("/update-channel-index", (req, res) => {
+    // console.log('req', req.query);
+    const chat_id = req.query.channel_id;
+    // console.log('chat_id', chat_id); 
+
+    const obj = channelsCache.find((channel) => {
+        return channel.id === parseInt(chat_id);
+    });
+
+    const chat_name = '@'+obj.username;
+    const category = obj.category;
+
+    fetchChannelDetails(chat_name, category, upChannel, res);
+  
 });
 
 

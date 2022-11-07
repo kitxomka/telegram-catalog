@@ -27,5 +27,6 @@ export const channelSlice = createSlice({
     }
 });
 
+
 export const { getChannels, updateFilterBy, channalCategoryName } = channelSlice.actions;
 export default channelSlice.reducer;
